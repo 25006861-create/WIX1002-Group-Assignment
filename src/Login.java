@@ -55,4 +55,64 @@ public class Login {
         }
         return null;
     }
+
+    // For GUI:
+    public boolean register(String email, String name, String password) {
+        if (email.length() < 19 || !email.startsWith("s10020") || !email.endsWith("@student.fop")) {
+            return false;
+        }
+
+        for (User user : userList) {
+            if (user.getEmail().equals(email)) {
+                return false;
+            }
+        }
+
+        String finalPassword = hashPassword(password);
+
+        try (PrintWriter output = new PrintWriter(new FileOutputStream(filePath, true))) {
+            output.println(email);
+            output.println(name);
+            output.println(finalPassword);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        userList.add(new User(email, name, finalPassword));
+        return true;
+    }
+
+    private String hashPassword(String originalPassword) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            // Create a variable named digest that holds a MessageDigest tool,
+            // and fill it by asking the Security Factory to give us the SHA-256 model.
+
+            byte[] encodedhash = digest.digest(originalPassword.getBytes());
+            // 1. originalPassword.getBytes() takes the letters 'a', 'p', 'p', 'l', 'e' and turns them into their
+            // numeric codes (ASCII number).
+            // 2. digest.digest() acts like a blender, it changes the numeric code into totally different and random number.
+            // Result: encodedhash is an array of raw numbers. It is NOT text yet.
+
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : encodedhash) {
+                String hex = Integer.toHexString(0xff & b);
+                // 1. The Problem: In Java, a byte is a tiny number that can be NEGATIVE.
+                // 2. The Fix (0xff & b): This is a "Bitwise Mask" to treat it as positive because
+                // Integer.toHexString(...): This only takes POSITIVE number and writes it in "Base-16" language.
+
+                if (hex.length() == 1) hexString.append('0');
+                // Check for consistency. We want "0a", not "a" (need two characters).
+
+                hexString.append(hex);
+                // append means "Add to the end."
+            }
+            return hexString.toString();
+
+        } catch (Exception e) {
+            return originalPassword;
+        }
+    }
 }
